@@ -16,6 +16,15 @@
             "role": "Developer"
         }
     ],
+    "support": {
+        "source": "https://github.com/club-1/flarum-ext-chore-commands"
+    },
+    "funding": [
+        {
+            "type": "github",
+            "url": "https://github.com/sponsors/n-peugnet"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Club1\\ChoreCommands\\": "src/"
