@@ -1,0 +1,10 @@
+/vendor
+/tests/.phpunit.*
+/tests/integration/tmp
+composer.phar
+
+.DS_Store
+Thumbs.db
+.vagrant
+.idea/*
+.vscode
