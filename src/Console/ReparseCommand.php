@@ -25,7 +25,6 @@ namespace Club1\ChoreCommands\Console;
 
 use Flarum\Console\AbstractCommand;
 use Flarum\Formatter\Formatter;
-use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
 use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputOption;
@@ -74,11 +73,14 @@ class ReparseCommand extends AbstractCommand
             ->lazyById($chunkSize);
         $posts = $io->progressIterate($posts);
         foreach ($posts as $post) {
-            assert($post instanceof CommentPost);
+            assert($post instanceof Post);
             $src = $this->formatter->unparse($post->content, $post);
             $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
-            $post->content = $this->formatter->parse($src, $post, $user);
-            $post->save();
+            $content = $this->formatter->parse($src, $post, $user);
+            if ($post->content != $content) {
+                $post->content = $content;
+                $post->save();
+            }
         }
     }
 }
