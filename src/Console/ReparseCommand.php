@@ -27,13 +27,12 @@ use Flarum\Console\AbstractCommand;
 use Flarum\Formatter\Formatter;
 use Flarum\Post\CommentPost;
 use Flarum\Post\Post;
+use InvalidArgumentException;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 class ReparseCommand extends AbstractCommand
 {
-    const CHUNK_SIKE = 100;
-
     /** @var Formatter */
     protected $formatter;
 
@@ -47,6 +46,7 @@ class ReparseCommand extends AbstractCommand
         $this
             ->setName('chore:reparse')
             ->setDescription('Reparse all comment posts using the latest formatter\'s configuration')
+            ->addOption('chunk-size', 'c', InputOption::VALUE_REQUIRED, 'Number of rows by chunk of posts to retreive from the DB', 500)
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Reply "yes" to all questions');
     }
 
@@ -54,6 +54,14 @@ class ReparseCommand extends AbstractCommand
     {
         $in = $this->input;
         $io = new SymfonyStyle($in, $this->output);
+
+        // Validate arguments & options
+        $chunkSize = $in->getOption('chunk-size');
+        if (!is_numeric($chunkSize)) {
+            throw new InvalidArgumentException('chunk-size option must be a numeric value');
+        }
+        $chunkSize = intval($chunkSize);
+
         $io->warning('This will reparse all the comment posts in the database with the latest formatter\'s configuration');
         if (!$in->getOption('yes') && !$io->confirm('Do you want to continue?', false)) {
             return static::FAILURE;
@@ -63,7 +71,7 @@ class ReparseCommand extends AbstractCommand
         $posts = Post::query()
             ->where('type', 'comment')
             ->select(['id', 'content', 'user_id', 'edited_user_id'])
-            ->lazyById(static::CHUNK_SIKE);
+            ->lazyById($chunkSize);
         $posts = $io->progressIterate($posts);
         foreach ($posts as $post) {
             assert($post instanceof CommentPost);
