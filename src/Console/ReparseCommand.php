@@ -60,6 +60,11 @@ class ReparseCommand extends AbstractCommand
             throw new InvalidArgumentException('chunk-size option must be a numeric value');
         }
         $chunkSize = intval($chunkSize);
+        if ($chunkSize < 20) {
+            $io->warning('A small chunk size will lower performances');
+        } elseif ($chunkSize > 10000) {
+            $io->warning('A chunk size too big could cause "out of memory" errors');
+        }
 
         $io->warning('This will reparse all the comment posts in the database with the latest formatter\'s configuration');
         if (!$in->getOption('yes') && !$io->confirm('Do you want to continue?', false)) {
@@ -72,6 +77,7 @@ class ReparseCommand extends AbstractCommand
             ->select(['id', 'content', 'user_id', 'edited_user_id'])
             ->lazyById($chunkSize);
         $posts = $io->progressIterate($posts);
+        $changed = 0;
         foreach ($posts as $post) {
             assert($post instanceof Post);
             $src = $this->formatter->unparse($post->content, $post);
@@ -80,7 +86,10 @@ class ReparseCommand extends AbstractCommand
             if ($post->content != $content) {
                 $post->content = $content;
                 $post->save();
+                $changed++;
             }
         }
+        $io->success("$changed post(s) changed");
+        return static::SUCCESS;
     }
 }
