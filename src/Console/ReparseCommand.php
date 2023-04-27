@@ -40,8 +40,6 @@ class ReparseCommand extends AbstractCommand
     public function __construct(Formatter $formatter) {
         parent::__construct();
         $this->formatter = $formatter;
-        // Flush formatter to be sure to have the latest configuration
-        $this->formatter->flush();
     }
 
     protected function configure()
@@ -60,6 +58,8 @@ class ReparseCommand extends AbstractCommand
         if (!$in->getOption('yes') && !$io->confirm('Do you want to continue?', false)) {
             return static::FAILURE;
         }
+        // Flush formatter to be sure to have the latest configuration
+        $this->formatter->flush();
         $posts = Post::query()
             ->where('type', 'comment')
             ->select(['id', 'content', 'user_id', 'edited_user_id'])
