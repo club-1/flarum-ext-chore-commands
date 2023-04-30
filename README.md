@@ -6,6 +6,8 @@ A [Flarum](http://flarum.org) extension. Adds a few maintenance commands to Flar
 
 > **Warning**: This extension is not yet very well tested and it can make bulk edits on the database. Use it first on a test database and/or make sure you have a backup of your database. If you run into issues, please report them [here](https://github.com/club-1/flarum-ext-chore-commands/issues).
 
+![banner](https://static.club1.fr/nicolas/projects/flarum-ext-chore-commands/banner.png)
+
 Once enabled in the admin dashboard, it provides the following Flarum console commands:
 
 ```
