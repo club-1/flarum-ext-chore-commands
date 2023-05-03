@@ -24,8 +24,13 @@
 namespace Club1\ChoreCommands\Console;
 
 use Carbon\Carbon;
+use Flarum\Extend;
+use Flarum\Formatter\Formatter;
 use Flarum\Testing\integration\ConsoleTestCase;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
+use Flarum\User\User;
+use s9e\TextFormatter\Configurator;
+use s9e\TextFormatter\Parser\Tag;
 
 class ReparseCommandTest extends ConsoleTestCase
 {
@@ -58,8 +63,8 @@ class ReparseCommandTest extends ConsoleTestCase
             '--yes' => true
         ];
         $output = $this->runCommand($input);
-        $this->assertMatchesRegularExpression('/2\/2/', $output);
-        $this->assertMatchesRegularExpression("/\[OK\] $expected post\(s\) changed/", $output);
+        $this->assertStringContainsString('2/2', $output);
+        $this->assertStringContainsString("[OK] $expected post(s) changed", $output);
     }
 
     public function basicProvider(): array
@@ -78,5 +83,34 @@ class ReparseCommandTest extends ConsoleTestCase
                 2,
             ],
         ];
+    }
+
+    public static function filterActor(Tag $tag, User $actor) {
+        $tag->setAttribute('actor', $actor->id);
+    }
+
+    public function testExtNeedsActor(): void
+    {
+        $this->prepareDatabase(['posts' => [
+            ['id' => 1, 'number' => 1, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => null, 'type' => 'comment', 'content' => '<t>[actor]</t>'],
+            ['id' => 2, 'number' => 2, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => '<t>[actor]</t>'],
+        ]]);
+
+        $this->extend((new Extend\Formatter)->configure(function (Configurator $conf) {
+            $conf->BBCodes->addCustom('[actor]', '<span>{@actor}</span>');
+            $filter = $conf->tags['actor']->filterChain->append([static::class, 'filterActor']);;
+            $filter->addParameterByName('actor');
+        }));
+        $this->app()->getContainer()->make(Formatter::class)->flush();
+
+        $input = [
+            'command' => 'chore:reparse',
+            '--yes' => true
+        ];
+        $output = $this->runCommand($input);
+        $this->assertStringContainsString('[WARNING] Failed to reparse post 1, skipped it', $output);
+        $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $output);
+        $this->assertStringContainsString('Argument #2 ($actor) must be of type Flarum\User\User, null given', $output);
+        $this->assertStringContainsString("[OK] 1 post(s) changed", $output);
     }
 }

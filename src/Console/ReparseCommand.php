@@ -85,7 +85,7 @@ class ReparseCommand extends AbstractCommand
                 $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
                 $content = $this->formatter->parse($src, $post, $user);
             } catch (\Throwable $exception) {
-                $io->warning("Error occurred while processing post with ID $post->id - reparsing was skipped:\n$exception\n");
+                $io->warning("Failed to reparse post $post->id, skipped it: {$exception->getMessage()}");
                 continue;
             }
             if ($post->content != $content) {
