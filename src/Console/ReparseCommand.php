@@ -79,8 +79,8 @@ class ReparseCommand extends AbstractCommand
             ->select(['id', 'content', 'user_id', 'edited_user_id'])
             ->lazyById($chunkSize);
         $progress = $io->createProgressBar();
-        $progress->setMessage(0, 'changed');
-        $progress->setMessage(0, 'skipped');
+        $progress->setMessage('0', 'changed');
+        $progress->setMessage('0', 'skipped');
         $progress->setFormat(" %current%/%max% [%bar%] %percent:3s%%  mem: %memory:6s%  changed: %changed:s%  skipped: %skipped:s% ");
         $skipped = 0;
         $changed = 0;
@@ -94,14 +94,14 @@ class ReparseCommand extends AbstractCommand
                 fwrite($log, "Failed to reparse post $post->id, skipped it: {$exception->getMessage()}\n");
                 fwrite($log, $exception->getTraceAsString());
                 $skipped++;
-                $progress->setMessage($skipped, 'skipped');
+                $progress->setMessage(strval($skipped), 'skipped');
                 continue;
             }
             if ($post->content != $content) {
                 $post->content = $content;
                 $post->save();
                 $changed++;
-                $progress->setMessage($changed, 'changed');
+                $progress->setMessage(strval($changed), 'changed');
             }
         }
         fclose($log);
