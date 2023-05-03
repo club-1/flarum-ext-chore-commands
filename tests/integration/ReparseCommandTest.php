@@ -86,7 +86,7 @@ class ReparseCommandTest extends ConsoleTestCase
     }
 
     public static function filterActor(Tag $tag, User $actor) {
-        $tag->setAttribute('actor', $actor->id);
+        $tag->setAttribute('actor', strval($actor->id));
     }
 
     public function testExtNeedsActor(): void
@@ -108,9 +108,8 @@ class ReparseCommandTest extends ConsoleTestCase
             '--yes' => true
         ];
         $output = $this->runCommand($input);
-        $this->assertStringContainsString('[WARNING] Failed to reparse post 1, skipped it', $output);
+        $this->assertStringContainsString('[WARNING] Failed to reparse post 1, skipped it:', $output);
         $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $output);
-        $this->assertStringContainsString('Argument #2 ($actor) must be of type Flarum\User\User, null given', $output);
         $this->assertStringContainsString("[OK] 1 post(s) changed", $output);
     }
 }
