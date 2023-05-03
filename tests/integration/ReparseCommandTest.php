@@ -48,24 +48,31 @@ class ReparseCommandTest extends ConsoleTestCase
     /**
      * @dataProvider basicProvider
      */
-    public function testBasic($posts, $expected): void
+    public function testBasic($contents, $expected): void
     {
-        $this->prepareDatabase(['posts' => $posts]);
+        $this->prepareDatabase(['posts' => array_map(function(int $id, string $content) {
+            return ['id' => $id, 'number' => $id, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => $content];
+        }, range(1, count($contents)), $contents)]);
         $input = [
             'command' => 'chore:reparse',
             '--yes' => true
         ];
         $output = $this->runCommand($input);
-        $this->assertMatchesRegularExpression("/\[OK\] $expected/", $output);
+        $this->assertMatchesRegularExpression('/2\/2/', $output);
+        $this->assertMatchesRegularExpression("/\[OK\] $expected post\(s\) changed/", $output);
     }
 
     public function basicProvider(): array
     {
         return [
-            [
-                [['id' => 1, 'number' => 1, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => '<t>something</t>']],
+            "no posts changed" => [
+                ['<t>something</t>', '<t>something else</t>'],
                 0,
-            ]
+            ],
+            "one post changed" => [
+                ['<t><p>something</p></t>', '<t>something else</t>'],
+                1,
+            ],
         ];
     }
 }
