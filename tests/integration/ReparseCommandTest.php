@@ -73,6 +73,10 @@ class ReparseCommandTest extends ConsoleTestCase
                 ['<t><p>something</p></t>', '<t>something else</t>'],
                 1,
             ],
+            "two post changed" => [
+                ['<t><p>something</p></t>', '<t><TAG>something else</TAG></t>'],
+                2,
+            ],
         ];
     }
 }
