@@ -108,8 +108,14 @@ class ReparseCommandTest extends ConsoleTestCase
             '--yes' => true
         ];
         $output = $this->runCommand($input);
-        $this->assertStringContainsString('[WARNING] Failed to reparse post 1, skipped it:', $output);
-        $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $output);
+        $this->assertStringContainsString('changed: 1  skipped: 1', $output);
+        $this->assertStringContainsString('[WARNING] 1 post(s) skipped, see the log in', $output);
         $this->assertStringContainsString("[OK] 1 post(s) changed", $output);
+        preg_match('/see the log in ([\w\/-]+)/', $output, $matches);
+        $temp = $matches[1];
+        $log = file_get_contents($temp);
+        $this->assertStringContainsString('Failed to reparse post 1, skipped it:', $log);
+        $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $log);
+        unlink($temp);
     }
 }

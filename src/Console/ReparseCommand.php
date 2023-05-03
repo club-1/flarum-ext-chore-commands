@@ -51,6 +51,8 @@ class ReparseCommand extends AbstractCommand
 
     protected function fire()
     {
+        $temp = tempnam(sys_get_temp_dir(), 'club1-chore-reparse-');
+        $log = fopen($temp, 'w');
         $in = $this->input;
         $io = new SymfonyStyle($in, $this->output);
 
@@ -76,23 +78,38 @@ class ReparseCommand extends AbstractCommand
             ->where('type', 'comment')
             ->select(['id', 'content', 'user_id', 'edited_user_id'])
             ->lazyById($chunkSize);
-        $posts = $io->progressIterate($posts);
+        $progress = $io->createProgressBar();
+        $progress->setMessage(0, 'changed');
+        $progress->setMessage(0, 'skipped');
+        $progress->setFormat(" %current%/%max% [%bar%] %percent:3s%%  mem: %memory:6s%  changed: %changed:s%  skipped: %skipped:s% ");
+        $skipped = 0;
         $changed = 0;
-        foreach ($posts as $post) {
+        foreach ($progress->iterate($posts) as $post) {
             assert($post instanceof Post);
             try {
                 $src = $this->formatter->unparse($post->content, $post);
                 $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
                 $content = $this->formatter->parse($src, $post, $user);
             } catch (\Throwable $exception) {
-                $io->warning("Failed to reparse post $post->id, skipped it: {$exception->getMessage()}");
+                fwrite($log, "Failed to reparse post $post->id, skipped it: {$exception->getMessage()}\n");
+                fwrite($log, $exception->getTraceAsString());
+                $skipped++;
+                $progress->setMessage($skipped, 'skipped');
                 continue;
             }
             if ($post->content != $content) {
                 $post->content = $content;
                 $post->save();
                 $changed++;
+                $progress->setMessage($changed, 'changed');
             }
+        }
+        fclose($log);
+        $io->write("\n\n");
+        if ($skipped != 0) {
+            $io->warning("$skipped post(s) skipped, see the log in $temp");
+        } else {
+            unlink($temp);
         }
         $io->success("$changed post(s) changed");
         return static::SUCCESS;
