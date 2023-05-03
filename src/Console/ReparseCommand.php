@@ -80,9 +80,14 @@ class ReparseCommand extends AbstractCommand
         $changed = 0;
         foreach ($posts as $post) {
             assert($post instanceof Post);
-            $src = $this->formatter->unparse($post->content, $post);
-            $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
-            $content = $this->formatter->parse($src, $post, $user);
+            try {
+                $src = $this->formatter->unparse($post->content, $post);
+                $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
+                $content = $this->formatter->parse($src, $post, $user);
+            } catch (\Throwable $exception) {
+                $io->warning("Error occurred while processing post with ID $post->id - reparsing was skipped:\n$exception\n");
+                continue;
+            }
             if ($post->content != $content) {
                 $post->content = $content;
                 $post->save();
