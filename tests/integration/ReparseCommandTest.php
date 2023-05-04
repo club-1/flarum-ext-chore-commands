@@ -52,18 +52,20 @@ class ReparseCommandTest extends ConsoleTestCase
 
     /**
      * @dataProvider basicProvider
+     * @param string[] $contents
      */
-    public function testBasic($contents, $expected): void
+    public function testBasic(array $contents, int $expected): void
     {
+        $count = count($contents);
         $this->prepareDatabase(['posts' => array_map(function(int $id, string $content) {
             return ['id' => $id, 'number' => $id, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => $content];
-        }, range(1, count($contents)), $contents)]);
+        }, range(1, $count), $contents)]);
         $input = [
             'command' => 'chore:reparse',
             '--yes' => true
         ];
         $output = $this->runCommand($input);
-        $this->assertStringContainsString('2/2', $output);
+        $this->assertStringContainsString("$count/$count", $output);
         $this->assertStringContainsString("[OK] $expected post(s) changed", $output);
     }
 
@@ -85,7 +87,8 @@ class ReparseCommandTest extends ConsoleTestCase
         ];
     }
 
-    public static function filterActor(Tag $tag, User $actor) {
+    public static function filterActor(Tag $tag, User $actor): void
+    {
         $tag->setAttribute('actor', strval($actor->id));
     }
 

@@ -40,7 +40,7 @@ class ReparseCommand extends AbstractCommand
         $this->formatter = $formatter;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('chore:reparse')
@@ -49,7 +49,7 @@ class ReparseCommand extends AbstractCommand
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Reply "yes" to all questions');
     }
 
-    protected function fire()
+    protected function fire(): int
     {
         $temp = tempnam(sys_get_temp_dir(), 'club1-chore-reparse-');
         $log = fopen($temp, 'w');
