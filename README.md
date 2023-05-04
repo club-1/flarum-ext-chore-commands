@@ -1,4 +1,4 @@
-# Chore Commands
+# CLUB1 Chore Commands
 
 ![License](https://img.shields.io/badge/license-AGPL--3.0--or--later-blue.svg) [![Latest Stable Version](https://img.shields.io/packagist/v/club-1/flarum-ext-chore-commands.svg)](https://packagist.org/packages/club-1/flarum-ext-chore-commands) [![Total Downloads](https://img.shields.io/packagist/dt/club-1/flarum-ext-chore-commands.svg)](https://packagist.org/packages/club-1/flarum-ext-chore-commands) [![Coverage](https://img.shields.io/codecov/c/gh/club-1/flarum-ext-chore-commands/main?token=59TC7P6RUB)](https://codecov.io/gh/club-1/flarum-ext-chore-commands) [![Build Status](https://img.shields.io/github/actions/workflow/status/club-1/flarum-ext-chore-commands/check.yml?branch=main)](https://github.com/club-1/flarum-ext-chore-commands/actions/workflows/check.yml)
 
@@ -10,7 +10,7 @@ A [Flarum](http://flarum.org) extension. Adds a few maintenance commands to Flar
 
 Once enabled in the admin dashboard, it provides the following Flarum console commands:
 
-```
+```plaintext
   chore:reparse  Reparse all comment posts using the latest formatter's configuration
 ```
 
@@ -32,6 +32,4 @@ composer update club-1/flarum-ext-chore-commands:"*"
 
 - [Packagist](https://packagist.org/packages/club-1/flarum-ext-chore-commands)
 - [GitHub](https://github.com/club-1/flarum-ext-chore-commands)
-<!--
-- [Discuss](https://discuss.flarum.org/d/PUT_DISCUSS_SLUG_HERE)
--->
+- [Discuss](https://discuss.flarum.org/d/32829)
