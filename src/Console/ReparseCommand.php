@@ -88,8 +88,8 @@ class ReparseCommand extends AbstractCommand
             assert($post instanceof Post);
             try {
                 $src = $this->formatter->unparse($post->content, $post);
-                $user = is_null($post->editedUser) ? $post->user : $post->editedUser;
-                $content = $this->formatter->parse($src, $post, $user);
+                $actor = $post->editedUser ?? $post->user;
+                $content = $this->formatter->parse($src, $post, $actor);
             } catch (\Throwable $exception) {
                 fwrite($log, "Failed to reparse post $post->id, skipped it: {$exception->getMessage()}\n");
                 fwrite($log, $exception->getTraceAsString());
