@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: AGPL-3.0-or-later
  */
 
-namespace Club1\ChoreCommands\Console;
+namespace Club1\ChoreCommands\Tests\integration;
 
 use Carbon\Carbon;
 use Flarum\Extend;
@@ -56,7 +56,7 @@ class ReparseCommandTest extends ConsoleTestCase
      * @dataProvider basicProvider
      * @param string[] $contents
      */
-    public function testBasic(array $contents, int $expected): void
+    public function testBasic(array $contents, int $expected, bool $transaction = true): void
     {
         $count = count($contents);
         $this->prepareDatabase(['posts' => array_map(function(int $id, string $content) {
@@ -64,7 +64,8 @@ class ReparseCommandTest extends ConsoleTestCase
         }, range(1, $count), $contents)]);
         $input = [
             'command' => 'chore:reparse',
-            '--yes' => true
+            '--yes' => true,
+            '--no-transaction' => !$transaction,
         ];
         $output = $this->runCommand($input);
         $this->assertStringContainsString("$count/$count", $output);
@@ -89,6 +90,26 @@ class ReparseCommandTest extends ConsoleTestCase
             "5k posts changed" => [
                 iterator_to_array($this->tagPostGenerator(5000)),
                 5000,
+            ],
+            "no posts changed no trans" => [
+                ['<t>something</t>', '<t>something else</t>'],
+                0,
+                false,
+            ],
+            "one post changed no trans" => [
+                ['<t><p>something</p></t>', '<t>something else</t>'],
+                1,
+                false,
+            ],
+            "two post changed no trans" => [
+                ['<t><p>something</p></t>', '<t><TAG>something else</TAG></t>'],
+                2,
+                false,
+            ],
+            "5k posts changed no trans" => [
+                iterator_to_array($this->tagPostGenerator(5000)),
+                5000,
+                false,
             ],
         ];
     }
@@ -176,7 +197,7 @@ class ReparseCommandTest extends ConsoleTestCase
         $temp = $matches[1];
         $log = file_get_contents($temp);
         $this->assertStringContainsString('Failed to reparse post 1, skipped it:', $log);
-        $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $log);
+        $this->assertStringContainsString('Club1\ChoreCommands\Tests\integration\ReparseCommandTest::filterActor()', $log);
         unlink($temp);
     }
 
