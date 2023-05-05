@@ -55,6 +55,7 @@ class ReparseCommand extends AbstractCommand implements SignalableCommandInterfa
             ->setName('chore:reparse')
             ->setDescription('Reparse all comment posts using the latest formatter\'s configuration')
             ->addOption('chunk-size', 'c', InputOption::VALUE_REQUIRED, 'Number of rows by chunk of posts to retreive from the DB', 500)
+            ->addOption('no-transaction', null, InputOption::VALUE_NONE, 'Do not wrap the process in a transaction, this prevents from rollbacking when interrupted')
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Reply "yes" to all questions');
     }
 
@@ -90,6 +91,7 @@ class ReparseCommand extends AbstractCommand implements SignalableCommandInterfa
         } elseif ($chunkSize > 10000) {
             $io->warning('A chunk size too big could cause "out of memory" errors');
         }
+        $useTransaction = !$in->getOption('no-transaction');
 
         $io->warning('This will reparse all the comment posts in the database with the latest formatter\'s configuration');
         if (!$in->getOption('yes') && !$io->confirm('Do you want to continue?', false)) {
@@ -107,8 +109,10 @@ class ReparseCommand extends AbstractCommand implements SignalableCommandInterfa
         $progress->setFormat(" %current%/%max% [%bar%] %percent:3s%%  mem: %memory:6s%  changed: %changed:s%  skipped: %skipped:s% ");
         $skipped = 0;
         $changed = 0;
-        $this->db->beginTransaction();
-        $this->transaction = true;
+        if ($useTransaction) {
+            $this->db->beginTransaction();
+            $this->transaction = true;
+        }
         foreach ($progress->iterate($posts) as $post) {
             assert($post instanceof Post);
             try {
@@ -117,7 +121,11 @@ class ReparseCommand extends AbstractCommand implements SignalableCommandInterfa
                 $content = $this->formatter->parse($src, $post, $actor);
                 if ($post->content != $content) {
                     $post->content = $content;
-                    $post->saveOrFail();
+                    if ($useTransaction) {
+                        $post->saveOrFail();
+                    } else {
+                        $post->save();
+                    }
                     $changed++;
                     $progress->setMessage(strval($changed), 'changed');
                 }
@@ -129,8 +137,10 @@ class ReparseCommand extends AbstractCommand implements SignalableCommandInterfa
                 continue;
             }
         }
-        $this->transaction = false;
-        $this->db->commit();
+        if ($useTransaction) {
+            $this->transaction = false;
+            $this->db->commit();
+        }
         fclose($log);
         $io->write("\n\n");
         if ($skipped != 0) {
