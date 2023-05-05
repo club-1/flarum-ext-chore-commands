@@ -29,6 +29,7 @@ use Flarum\Formatter\Formatter;
 use Flarum\Testing\integration\ConsoleTestCase;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\User\User;
+use Generator;
 use s9e\TextFormatter\Configurator;
 use s9e\TextFormatter\Parser\Tag;
 
@@ -84,7 +85,18 @@ class ReparseCommandTest extends ConsoleTestCase
                 ['<t><p>something</p></t>', '<t><TAG>something else</TAG></t>'],
                 2,
             ],
+            "5k posts changed" => [
+                iterator_to_array($this->tagPostGenerator(5000)),
+                5000,
+            ],
         ];
+    }
+
+    protected function tagPostGenerator(int $count): Generator
+    {
+        for ($i = 0; $i < $count; $i++) {
+            yield "<t><TAG>something $i</TAG><t>";
+        }
     }
 
     public static function filterActor(Tag $tag, User $actor): void
