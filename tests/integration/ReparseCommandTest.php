@@ -179,4 +179,34 @@ class ReparseCommandTest extends ConsoleTestCase
         $this->assertStringContainsString('Club1\ChoreCommands\Console\ReparseCommandTest::filterActor()', $log);
         unlink($temp);
     }
+
+    public function testSaveFailure(): void
+    {
+        $this->prepareDatabase(['posts' => [
+            ['id' => 1, 'number' => 1, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => '<t>[repeat char="A"]</t>'],
+            ['id' => 2, 'number' => 2, 'discussion_id' => 1, 'created_at' => Carbon::now(), 'user_id' => 1, 'type' => 'comment', 'content' => '<t><TAG>should change</TAG></t>'],
+        ]]);
+
+        $this->extend((new Extend\Formatter)->configure(function (Configurator $conf) {
+            $conf->BBCodes->addCustom('[repeat char={TEXT}]', '<span>{@char}</span>');
+            $filter = $conf->tags['repeat']->attributes['char']->filterChain->append('str_repeat');
+            $filter->addParameterByValue((1 << 24) - 76);
+        }));
+        $this->app()->getContainer()->make(Formatter::class)->flush();
+        $this->console()->setCatchExceptions(false);
+
+        $input = [
+            'command' => 'chore:reparse',
+            '--yes' => true
+        ];
+        $output = $this->runCommand($input);
+        $this->assertStringContainsString('changed: 0  skipped: 1', $output);
+        $this->assertStringContainsString('changed: 1  skipped: 1', $output);
+        $this->assertStringContainsString('[WARNING] 1 post(s) skipped, see the log in', $output);
+        preg_match('/see the log in ([\w\/-]+)/', $output, $matches);
+        $temp = $matches[1];
+        $log = file_get_contents($temp);
+        $this->assertStringContainsString('Failed to reparse post 1, skipped it:', $log);
+        unlink($temp);
+    }
 }

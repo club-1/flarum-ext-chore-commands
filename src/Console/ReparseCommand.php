@@ -26,18 +26,27 @@ namespace Club1\ChoreCommands\Console;
 use Flarum\Console\AbstractCommand;
 use Flarum\Formatter\Formatter;
 use Flarum\Post\Post;
+use Illuminate\Database\ConnectionInterface;
 use InvalidArgumentException;
+use Symfony\Component\Console\Command\SignalableCommandInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class ReparseCommand extends AbstractCommand
+class ReparseCommand extends AbstractCommand implements SignalableCommandInterface
 {
     /** @var Formatter */
     protected $formatter;
 
-    public function __construct(Formatter $formatter) {
+    /** @var ConnectionInterface */
+    protected $db;
+
+    /** @var bool */
+    protected $transaction = false;
+
+    public function __construct(Formatter $formatter, ConnectionInterface $db) {
         parent::__construct();
         $this->formatter = $formatter;
+        $this->db = $db;
     }
 
     protected function configure(): void
@@ -47,6 +56,20 @@ class ReparseCommand extends AbstractCommand
             ->setDescription('Reparse all comment posts using the latest formatter\'s configuration')
             ->addOption('chunk-size', 'c', InputOption::VALUE_REQUIRED, 'Number of rows by chunk of posts to retreive from the DB', 500)
             ->addOption('yes', 'y', InputOption::VALUE_NONE, 'Reply "yes" to all questions');
+    }
+
+    public function getSubscribedSignals(): array
+    {
+        return [SIGINT, SIGTERM];
+    }
+
+    public function handleSignal(int $signal): void
+    {
+        if ($this->transaction) {
+            $this->info("\n\nRolling back changes");
+            $this->db->rollBack();
+        }
+        exit(128 + $signal);
     }
 
     protected function fire(): int
@@ -84,12 +107,20 @@ class ReparseCommand extends AbstractCommand
         $progress->setFormat(" %current%/%max% [%bar%] %percent:3s%%  mem: %memory:6s%  changed: %changed:s%  skipped: %skipped:s% ");
         $skipped = 0;
         $changed = 0;
+        $this->db->beginTransaction();
+        $this->transaction = true;
         foreach ($progress->iterate($posts) as $post) {
             assert($post instanceof Post);
             try {
                 $src = $this->formatter->unparse($post->content, $post);
                 $actor = $post->editedUser ?? $post->user;
                 $content = $this->formatter->parse($src, $post, $actor);
+                if ($post->content != $content) {
+                    $post->content = $content;
+                    $post->saveOrFail();
+                    $changed++;
+                    $progress->setMessage(strval($changed), 'changed');
+                }
             } catch (\Throwable $exception) {
                 fwrite($log, "Failed to reparse post $post->id, skipped it: {$exception->getMessage()}\n");
                 fwrite($log, $exception->getTraceAsString());
@@ -97,13 +128,9 @@ class ReparseCommand extends AbstractCommand
                 $progress->setMessage(strval($skipped), 'skipped');
                 continue;
             }
-            if ($post->content != $content) {
-                $post->content = $content;
-                $post->save();
-                $changed++;
-                $progress->setMessage(strval($changed), 'changed');
-            }
         }
+        $this->transaction = false;
+        $this->db->commit();
         fclose($log);
         $io->write("\n\n");
         if ($skipped != 0) {
