@@ -99,6 +99,28 @@ class ReparseCommandTest extends ConsoleTestCase
         }
     }
 
+    /**
+     * @dataProvider optionWarningsProvider
+     */
+    public function testOptionWarnings(array $options, string $message): void
+    {
+        $input = [
+            'command' => 'chore:reparse',
+            '--yes' => true
+        ];
+        $input = array_merge($input, $options);
+        $output = $this->runCommand($input);
+        $this->assertStringContainsString("[WARNING] $message", $output);
+    }
+
+    public function optionWarningsProvider(): array
+    {
+        return [
+            [['--chunk-size' => 10], 'A small chunk size will lower performances'],
+            [['--chunk-size' => 12345], 'A chunk size too big could cause "out of memory" errors'],
+        ];
+    }
+
     public static function filterActor(Tag $tag, User $actor): void
     {
         $tag->setAttribute('actor', strval($actor->id));
