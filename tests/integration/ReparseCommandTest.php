@@ -30,6 +30,7 @@ use Flarum\Testing\integration\ConsoleTestCase;
 use Flarum\Testing\integration\RetrievesAuthorizedUsers;
 use Flarum\User\User;
 use Generator;
+use InvalidArgumentException;
 use s9e\TextFormatter\Configurator;
 use s9e\TextFormatter\Parser\Tag;
 
@@ -97,6 +98,29 @@ class ReparseCommandTest extends ConsoleTestCase
         for ($i = 0; $i < $count; $i++) {
             yield "<t><TAG>something $i</TAG><t>";
         }
+    }
+
+    /**
+     * @dataProvider optionExceptionsProvider
+     */
+    public function testOptionExceptions(array $options, string $message): void
+    {
+        $input = [
+            'command' => 'chore:reparse',
+            '--yes' => true
+        ];
+        $input = array_merge($input, $options);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage($message);
+        $this->console()->setCatchExceptions(false);
+        $this->runCommand($input);
+    }
+
+    public function optionExceptionsProvider(): array
+    {
+        return [
+            [['--chunk-size' => 'test'], 'chunk-size option must be a numeric value'],
+        ];
     }
 
     /**
