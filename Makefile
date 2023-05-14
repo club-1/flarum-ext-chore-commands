@@ -20,7 +20,7 @@ $(FLARUM_TEST_TMP_DIR): vendor
 	touch $@
 
 # Create a new release
-bump = echo '$2' | awk 'BEGIN{FS=OFS="."} {$$$1+=1} 1'
+bump = echo '$2' | awk 'BEGIN{FS=OFS="."} {$$$1+=1; for (i=$1+1; i<=3; i++) $$i=0} 1'
 releasepatch: V := 3
 releaseminor: V := 2
 releasemajor: V := 1
