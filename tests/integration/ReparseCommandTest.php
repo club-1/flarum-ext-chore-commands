@@ -193,7 +193,7 @@ class ReparseCommandTest extends ConsoleTestCase
         $this->assertStringContainsString('changed: 1  skipped: 1', $output);
         $this->assertStringContainsString('[WARNING] 1 post(s) skipped, see the log in', $output);
         $this->assertStringContainsString("[OK] 1 post(s) changed", $output);
-        preg_match('/see the log in ([\w\/-]+)/', $output, $matches);
+        preg_match('/see the log in\s+([\w\/-]+)/', $output, $matches);
         $temp = $matches[1];
         $log = file_get_contents($temp);
         $this->assertStringContainsString('Failed to reparse post 1, skipped it:', $log);
@@ -224,7 +224,7 @@ class ReparseCommandTest extends ConsoleTestCase
         $this->assertStringContainsString('changed: 0  skipped: 1', $output);
         $this->assertStringContainsString('changed: 1  skipped: 1', $output);
         $this->assertStringContainsString('[WARNING] 1 post(s) skipped, see the log in', $output);
-        preg_match('/see the log in ([\w\/-]+)/', $output, $matches);
+        preg_match('/see the log in\s+([\w\/-]+)/', $output, $matches);
         $temp = $matches[1];
         $log = file_get_contents($temp);
         $this->assertStringContainsString('Failed to reparse post 1, skipped it:', $log);
