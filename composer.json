@@ -63,6 +63,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
+        "lock": false,
         "sort-packages": true
     },
     "autoload-dev": {

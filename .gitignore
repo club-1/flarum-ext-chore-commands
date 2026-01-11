@@ -1,6 +1,7 @@
 /vendor
 /tests/.phpunit.*
 /tests/integration/tmp
+composer.lock
 composer.phar
 
 .DS_Store

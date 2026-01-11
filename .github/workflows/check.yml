@@ -33,9 +33,6 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - if: ${{ matrix.php < 8.1 }}
-        run: rm composer.lock
-
       - name: Install dependencies & build
         run: composer install && make
 

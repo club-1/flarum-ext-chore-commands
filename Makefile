@@ -11,7 +11,7 @@ all: vendor;
 
 dev: vendor;
 
-vendor: composer.json composer.lock
+vendor: composer.json
 	composer install
 	touch $@
 
